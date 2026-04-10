@@ -1,2 +1,0 @@
-# studytimer
-Timer for studying
