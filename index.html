@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus | Minimal Timer</title>
+    <meta name="description" content="A modern, minimalistic focus timer.">
+    
+    <link rel="icon" type="image/svg+xml" href="./icon.svg">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-AQg-E5qY.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D_aHz8IM.css">
+<link rel="manifest" href="./manifest.webmanifest"></head>
+<body>
+    <!-- Timer Complete Modal (inline styles for guaranteed visibility) -->
+    <div id="timer-complete-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center;">
+        <div style="background: var(--surface, #ffffff); border-radius: 24px; padding: 2rem; max-width: 320px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid var(--border, #EAEAEA);">
+            <h2 style="margin-bottom: 0.5rem; color: var(--text, #111111); font-size: 1.75rem; font-weight: 500;">Time's up!</h2>
+            <p id="modal-message" style="margin-bottom: 2rem; color: var(--text-muted, #555555);">Timer complete</p>
+            <button id="btn-modal-stop" style="background: var(--accent, #FF9500); color: var(--bg, #FAFAFA); border: none; padding: 0.75rem 2rem; border-radius: 40px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: opacity 0.2s;">Stop Alarm</button>
+        </div>
+    </div>
+
+    <nav class="top-nav">
+        <div class="nav-left">
+            <span class="brand">Focus.</span>
+        </div>
+        <div class="nav-right">
+            <!-- Sound alerts toggle (bell) moved to first position -->
+            <button id="sound-toggle" class="icon-btn" title="Sound alerts on">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                </svg>
+            </button>
+
+            <!-- Music selector (sound menu) now second -->
+            <div class="sound-selector">
+                <button id="sound-menu-btn" class="icon-btn" title="Select Soundscape">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                </button>
+                <div id="sound-menu" class="sound-menu hidden">
+                    <button data-sound="none" class="sound-opt active">None</button>
+                    <button data-sound="rain" class="sound-opt">Rain</button>
+                    <button data-sound="white" class="sound-opt">White Noise</button>
+                    <button data-sound="brown" class="sound-opt">Deep Brown</button>
+                    <button data-sound="waves" class="sound-opt">Waves</button>
+                    <div class="menu-sep"></div>
+                    <button id="btn-shuffle" class="sound-opt">Play All (Shuffle)</button>
+                </div>
+            </div>
+
+            <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
+                <svg id="theme-icon-light" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                </svg>
+                <svg id="theme-icon-dark" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <button id="fullscreen-toggle" class="icon-btn" title="Fullscreen">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <main class="app-container">
+        <div class="timer-container">
+            <div class="progress-wrapper">
+                <svg class="progress-ring" viewBox="0 0 100 100">
+                    <circle class="ring-bg" cx="50" cy="50" r="48"></circle>
+                    <circle id="progress-bar" class="ring-fill" cx="50" cy="50" r="48"></circle>
+                </svg>
+                <div class="time-display-wrapper">
+                    <div id="input-group" class="input-group">
+                        <input type="number" id="in-hh" class="unit-input" placeholder="00" min="0" max="99">
+                        <span class="sep">:</span>
+                        <input type="number" id="in-mm" class="unit-input" placeholder="00" min="0" max="59">
+                        <span class="sep">:</span>
+                        <input type="number" id="in-ss" class="unit-input" placeholder="00" min="0" max="59">
+                    </div>
+                    <div id="time-display" class="time-text display-mode hidden">00:00</div>
+                    <div id="status-text" class="status-text">Ready to focus</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="btn-reset" class="control-btn secondary hidden hold-btn">
+                <div class="hold-progress"></div>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+            <button id="btn-start" class="control-btn primary">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+            <button id="btn-pause" class="control-btn primary hidden hold-btn">
+                <div class="hold-progress"></div>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            </button>
+            <button id="btn-add-timer-active" class="control-btn secondary hidden" title="Add Secondary Timer">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+        </div>
+
+        <div id="presets" class="presets-menu">
+            <button class="preset-btn" data-time="600">10m</button>
+            <button class="preset-btn" data-time="900">15m</button>
+            <button class="preset-btn" data-time="1500">25m</button>
+            <button class="preset-btn" data-time="3000">50m</button>
+            <button class="preset-btn" data-time="3600">1h</button>
+            <div class="menu-sep-v"></div>
+            <button id="btn-add-timer" class="preset-btn secondary-add" title="Add Secondary Timer">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Dual
+            </button>
+        </div>
+
+        <div id="secondary-timer" class="mini-timer hidden">
+            <div id="mini-drag-handle" class="mini-drag-handle">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+            </div>
+            <div class="mini-progress-wrapper">
+                <svg class="mini-progress-ring" viewBox="0 0 100 100">
+                    <circle class="mini-ring-bg" cx="50" cy="50" r="48"></circle>
+                    <circle id="mini-progress-bar" class="mini-ring-fill" cx="50" cy="50" r="48"></circle>
+                </svg>
+                <div id="mini-input-group" class="mini-input-group">
+                    <input type="number" id="mini-in-mm" class="mini-unit-input" placeholder="15" min="0" max="99">
+                    <span class="mini-sep">:</span>
+                    <input type="number" id="mini-in-ss" class="mini-unit-input" placeholder="00" min="0" max="59">
+                </div>
+                <div id="mini-time-display" class="mini-time-text hidden">15:00</div>
+            </div>
+            <div class="mini-controls">
+                <button id="btn-mini-swap" class="mini-btn" title="Swap Timers">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+                </button>
+                <button id="btn-mini-start" class="mini-btn" title="Start">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+                <button id="btn-mini-pause" class="mini-btn hidden hold-btn" title="Pause">
+                    <div class="hold-progress"></div>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button id="btn-mini-close" class="mini-btn hold-btn" title="Close">
+                    <div class="hold-progress"></div>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
